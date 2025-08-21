@@ -328,7 +328,7 @@ main {
 .bottom-controls {
   position: sticky;
   bottom: 0;
-  width: 100vw;
+  width: 100%;
   background: #fffdfa;
   box-shadow: 0 -2px 12px #00000010;
   padding: 0.8em 0.7em 0.7em 0.7em;
@@ -428,4 +428,16 @@ footer {
   .slider-controls {
     gap: 0.8em;
   }
+}
+
+@media (max-width: 480px) {
+  .game-title { font-size: 1.6rem; }
+  .current-player { font-size: 1.05em; }
+  .card { padding: 0.9em 0.6em 1em 0.6em; margin: 1rem auto; }
+  .actions { flex-wrap: wrap; gap: 0.6em; }
+  .action-btn, .primary-btn, .secondary-btn { font-size: 0.98em; padding: 0.55em 0.9em; min-width: 110px; }
+  .turn-list li { font-size: 0.95em; padding: 0.35em 0.5em; }
+  .action-log { max-height: 140px; }
+  .probability { font-size: 0.98em; padding: 0.4em 0.8em; }
+  .slider-controls { gap: 0.6em; }
 }

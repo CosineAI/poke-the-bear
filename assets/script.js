@@ -426,7 +426,7 @@ function pokeBear() {
   logAction(`Chance now ${formatPercent(currentProb)}`);
   // Show restless bear sentence only if log is hidden, as a message not a log entry
   const sentence = restlessBear[Math.floor(Math.random() * restlessBear.length)];
-  const isLogHidden = (logArea.style.display === 'none') || logArea.classList.contains('hidden');
+  const isLogHidden = window.getComputedStyle(logArea).display === 'none';
   if (isLogHidden) {
     showRestlessMessage(sentence);
   }
