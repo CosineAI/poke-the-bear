@@ -1,10 +1,8 @@
-// Poke the Bear Game Implementation
-
 // ==== DOM Elements ====
 const setupPanel = document.getElementById('setupPanel');
 const gamePanel = document.getElementById('gamePanel');
 const playerCountInput = document.getElementById('playerCountInput');
-const playerNamesInput = document.getElementById('playerNamesInput');
+const playerNamesContainer = document.getElementById('playerNamesContainer');
 const startBtn = document.getElementById('startBtn');
 const btnPoke = document.getElementById('btnPoke');
 const btnEndTurn = document.getElementById('btnEndTurn');
@@ -46,6 +44,60 @@ let namesByIndex = {}; // maps player 1..N to name string
 // ==== LocalStorage Helpers ====
 const LS_PLAYER_COUNT = 'ptb_playerCount';
 const LS_PLAYER_NAMES = 'ptb_playerNames';
+
+function getDefaultName(i) {
+  return `Player ${i}`;
+}
+
+function getNamesFromInputs(count) {
+  const arr = [];
+  for (let i = 1; i <= count; i++) {
+    const el = document.getElementById(`playerName_${i}`);
+    const v = (el?.value || '').trim();
+    arr.push(v || getDefaultName(i));
+  }
+  return arr;
+}
+
+function renderNameInputs(count, presetNames = []) {
+  const frag = document.createDocumentFragment();
+  for (let i = 1; i <= count; i++) {
+    const wrap = document.createElement('div');
+    wrap.className = 'name-field';
+    const lab = document.createElement('label');
+    lab.setAttribute('for', `playerName_${i}`);
+    lab.textContent = `Player ${i} Name`;
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.id = `playerName_${i}`;
+    inp.placeholder = getDefaultName(i);
+    inp.value = (presetNames[i - 1] && presetNames[i - 1].trim()) || '';
+    wrap.appendChild(lab);
+    wrap.appendChild(inp);
+    frag.appendChild(wrap);
+  }
+  playerNamesContainer.innerHTML = '';
+  playerNamesContainer.appendChild(frag);
+}
+
+function savePlayerPrefs() {
+  localStorage.setItem(LS_PLAYER_COUNT, String(playerCountInput.value));
+  const namesArr = getNamesFromInputs(parseInt(playerCountInput.value, 10) || 4);
+  localStorage.setItem(LS_PLAYER_NAMES, JSON.stringify(namesArr));
+}
+
+function loadPlayerPrefs() {
+  const pc = localStorage.getItem(LS_PLAYER_COUNT);
+  if (pc) playerCountInput.value = pc;
+  const pn = localStorage.getItem(LS_PLAYER_NAMES);
+  if (pn === null) return [];
+  try {
+    const arr = JSON.parse(pn);
+    if (Array.isArray(arr)) return arr;
+  } catch (e) {}
+  // fallback for old textarea format
+  return pn.split('\n').map(s => s.trim()).filter(Boolean);
+}
 
 const restlessBear = [
   "The bear shifts in its dreams.",
@@ -106,17 +158,6 @@ const restlessBear = [
   "The bear jerks awake for a moment, then sleeps on.",
   "The bear hums low in its throat."
 ];
-
-function savePlayerPrefs() {
-  localStorage.setItem(LS_PLAYER_COUNT, String(playerCountInput.value));
-  localStorage.setItem(LS_PLAYER_NAMES, playerNamesInput.value);
-}
-function loadPlayerPrefs() {
-  const pc = localStorage.getItem(LS_PLAYER_COUNT);
-  if (pc) playerCountInput.value = pc;
-  const pn = localStorage.getItem(LS_PLAYER_NAMES);
-  if (pn !== null) playerNamesInput.value = pn;
-}
 
 // ==== Utility Functions ====
 function shuffle(array) {
@@ -210,8 +251,8 @@ function updateTurnListUI() {
   turnList.innerHTML = '';
   for (let i = 0; i < turnOrder.length; i++) {
     const pNum = turnOrder[i];
-    const li = document.createElement('li');
-    li.textContent = namesByIndex[pNum] || `Player ${pNum}`;
+    li = document.createElement('li');
+    li.textContent = namesByIndex[pNum] || getDefaultName(pNum);
     if (i === currentTurnIndex && gameActive) {
       li.classList.add('current');
     }
@@ -233,7 +274,7 @@ function updateCurrentPlayerUI() {
     return;
   }
   const pNum = turnOrder[currentTurnIndex];
-  currentPlayerLabel.textContent = `Turn: ${namesByIndex[pNum] || `Player ${pNum}`}`;
+  currentPlayerLabel.textContent = `Turn: ${namesByIndex[pNum] || getDefaultName(pNum)}`;
 }
 
 // Action buttons
@@ -248,7 +289,7 @@ function setActionsEnabled(enabled) {
 function showGameOver(loserPlayerNum) {
   gameActive = false;
   setActionsEnabled(false);
-  const loserName = namesByIndex[loserPlayerNum] || `Player ${loserPlayerNum}`;
+  const loserName = namesByIndex[loserPlayerNum] || getDefaultName(loserPlayerNum);
   gameOverMsg.innerHTML = `<b>The bear woke and ate ${loserName}!<br>Take a drink! 🐻🍺</b><br><button id="btnGameOverNew" class="primary-btn" style="margin-top:1em;">New Game</button>`;
   gameOverMsg.style.display = '';
   // Ensure focus for accessibility
@@ -287,12 +328,11 @@ function hidePokeBadge() {
 function startGame() {
   playersCount = clamp(parseInt(playerCountInput.value, 10) || 4, 2, 12);
 
-  // Build names array from textarea, fill/truncate as needed
-  let nameLines = playerNamesInput.value.split('\n')
-    .map(s => s.trim()).filter(Boolean);
+  // Build names array from dynamic inputs, fill/truncate as needed
+  let namesArr = getNamesFromInputs(playersCount);
   namesByIndex = {};
   for (let i = 1; i <= playersCount; i++) {
-    namesByIndex[i] = nameLines[i-1] || `Player ${i}`;
+    namesByIndex[i] = namesArr[i - 1] || getDefaultName(i);
   }
 
   // Save player count and names to localStorage
@@ -350,7 +390,7 @@ function pokeBear() {
   totalPokes++;
   updatePokeBadge();
   const pNum = turnOrder[currentTurnIndex];
-  const name = namesByIndex[pNum] || `Player ${pNum}`;
+  const name = namesByIndex[pNum] || getDefaultName(pNum);
   // Wake check
   const wake = Math.random() * 100 < currentProb;
   logAction(`${name} poked: ${wake ? 'the bear woke up!' : 'survived.'} Chance was ${formatPercent(currentProb)}`);
@@ -380,7 +420,7 @@ function pokeBear() {
 function endTurn() {
   if (!hasPokedThisTurn || !gameActive) return;
   const pNum = turnOrder[currentTurnIndex];
-  const name = namesByIndex[pNum] || `Player ${pNum}`;
+  const name = namesByIndex[pNum] || getDefaultName(pNum);
   logAction(`${name} ended turn.`);
   advanceTurn();
 }
@@ -390,7 +430,7 @@ function useLullaby() {
   const pNum = turnOrder[currentTurnIndex];
   if (lullabyUsed[pNum]) return;
   lullabyUsed[pNum] = true;
-  const name = namesByIndex[pNum] || `Player ${pNum}`;
+  const name = namesByIndex[pNum] || getDefaultName(pNum);
   // Reduce probability by 10 (clamp at 0)
   const before = currentProb;
   currentProb = clamp(currentProb - 10, 0, 100);
@@ -403,10 +443,8 @@ function useLullaby() {
 }
 
 function doResetGame() {
-  // Restore all to initial state, but keep playerCountInput and playerNamesInput as user set (do not reset!)
+  // Restore all to initial state, but keep playerCountInput and names as user set (do not reset!)
   setSlidersEnabled(true);
-  //playerCountInput.value = "4"; // don't reset, keep
-  //playerNamesInput.value = ""; // don't reset, keep
   sliderInitial.value = "1";
   sliderInitialBottom.value = "1";
   sliderIncrement.value = "1";
@@ -502,7 +540,7 @@ sliderIncrementBottom.addEventListener('input', () => {
   updateSliderDisplays();
 });
 
-// Player count input clamp and persist
+// Player count input clamp and preserve names
 playerCountInput.addEventListener('input', () => {
   let val = parseInt(playerCountInput.value, 10);
   if (isNaN(val) || val < 2) {
@@ -510,17 +548,33 @@ playerCountInput.addEventListener('input', () => {
   } else if (val > 12) {
     playerCountInput.value = 12;
   }
+  // Read names so far:
+  const oldCount = playerNamesContainer.querySelectorAll('.name-field input[type="text"]').length;
+  const oldNames = [];
+  for (let i = 1; i <= oldCount; i++) {
+    const el = document.getElementById(`playerName_${i}`);
+    oldNames.push((el?.value || '').trim());
+  }
+  // Render new inputs, preserving old where possible
+  const newCount = parseInt(playerCountInput.value, 10) || 4;
+  renderNameInputs(newCount, oldNames);
   savePlayerPrefs();
 });
 
-// Player names persist
-playerNamesInput.addEventListener('input', () => {
-  savePlayerPrefs();
+// Delegate input events for name fields to save on change
+playerNamesContainer.addEventListener('input', function (e) {
+  if (e.target && e.target.matches('input[type="text"]')) {
+    savePlayerPrefs();
+  }
 });
 
 // ==== Initialization ====
 function init() {
-  loadPlayerPrefs();
+  // Load prefs
+  const savedNames = loadPlayerPrefs();
+  const count = parseInt(playerCountInput.value, 10) || 4;
+  renderNameInputs(count, savedNames);
+
   updateSliderDisplays();
   setSlidersEnabled(true);
   showSetupPanel();
