@@ -265,7 +265,6 @@ function updateTurnListUI() {
     }
     turnList.appendChild(li);
   }
-}
 // Current player
 function updateCurrentPlayerUI() {
   if (!gameActive) {
