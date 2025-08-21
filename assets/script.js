@@ -4,6 +4,7 @@
 const setupPanel = document.getElementById('setupPanel');
 const gamePanel = document.getElementById('gamePanel');
 const playerCountInput = document.getElementById('playerCountInput');
+const playerNamesInput = document.getElementById('playerNamesInput');
 const startBtn = document.getElementById('startBtn');
 const btnPoke = document.getElementById('btnPoke');
 const btnEndTurn = document.getElementById('btnEndTurn');
@@ -17,6 +18,7 @@ const currentPlayerLabel = document.getElementById('currentPlayer');
 const btnToggleLog = document.getElementById('btnToggleLog');
 const btnToggleSettings = document.getElementById('btnToggleSettings');
 const sliderControls = document.querySelector('.slider-controls');
+const pokeCountBadge = document.getElementById('pokeCount');
 
 // Sliders (both setup and bottom controls)
 const sliderInitial = document.getElementById('sliderInitial');
@@ -31,13 +33,30 @@ const labelIncrementBottom = document.getElementById('labelIncrementBottom');
 
 // ==== Game State ====
 let playersCount = 4;
-let turnOrder = []; // array of player numbers [1,2,...]
+let turnOrder = []; // array of player indices (1..N)
 let currentTurnIndex = 0;
 let currentProb = 1;
 let perPokeIncrement = 1;
 let hasPokedThisTurn = false;
 let lullabyUsed = [];
 let gameActive = false;
+let totalPokes = 0;
+let namesByIndex = {}; // maps player 1..N to name string
+
+// ==== LocalStorage Helpers ====
+const LS_PLAYER_COUNT = 'ptb_playerCount';
+const LS_PLAYER_NAMES = 'ptb_playerNames';
+
+function savePlayerPrefs() {
+  localStorage.setItem(LS_PLAYER_COUNT, String(playerCountInput.value));
+  localStorage.setItem(LS_PLAYER_NAMES, playerNamesInput.value);
+}
+function loadPlayerPrefs() {
+  const pc = localStorage.getItem(LS_PLAYER_COUNT);
+  if (pc) playerCountInput.value = pc;
+  const pn = localStorage.getItem(LS_PLAYER_NAMES);
+  if (pn !== null) playerNamesInput.value = pn;
+}
 
 // ==== Utility Functions ====
 function shuffle(array) {
@@ -132,7 +151,7 @@ function updateTurnListUI() {
   for (let i = 0; i < turnOrder.length; i++) {
     const pNum = turnOrder[i];
     const li = document.createElement('li');
-    li.textContent = `Player ${pNum}`;
+    li.textContent = namesByIndex[pNum] || `Player ${pNum}`;
     if (i === currentTurnIndex && gameActive) {
       li.classList.add('current');
     }
@@ -154,7 +173,7 @@ function updateCurrentPlayerUI() {
     return;
   }
   const pNum = turnOrder[currentTurnIndex];
-  currentPlayerLabel.textContent = `Turn: Player ${pNum}`;
+  currentPlayerLabel.textContent = `Turn: ${namesByIndex[pNum] || `Player ${pNum}`}`;
 }
 
 // Action buttons
@@ -169,7 +188,8 @@ function setActionsEnabled(enabled) {
 function showGameOver(loserPlayerNum) {
   gameActive = false;
   setActionsEnabled(false);
-  gameOverMsg.innerHTML = `<b>The bear woke and ate Player ${loserPlayerNum}!<br>Take a drink! 🐻🍺</b><br><button id="btnGameOverNew" class="primary-btn" style="margin-top:1em;">New Game</button>`;
+  const loserName = namesByIndex[loserPlayerNum] || `Player ${loserPlayerNum}`;
+  gameOverMsg.innerHTML = `<b>The bear woke and ate ${loserName}!<br>Take a drink! 🐻🍺</b><br><button id="btnGameOverNew" class="primary-btn" style="margin-top:1em;">New Game</button>`;
   gameOverMsg.style.display = '';
   // Ensure focus for accessibility
   const btnOver = gameOverMsg.querySelector('#btnGameOverNew');
@@ -192,9 +212,32 @@ function clearLog() {
   logArea.innerHTML = '';
 }
 
+// ==== Poke Count Badge ====
+function updatePokeBadge() {
+  pokeCountBadge.textContent = `Pokes: ${totalPokes}`;
+}
+function showPokeBadge() {
+  pokeCountBadge.style.display = '';
+}
+function hidePokeBadge() {
+  pokeCountBadge.style.display = 'none';
+}
+
 // ==== Game Logic ====
 function startGame() {
   playersCount = clamp(parseInt(playerCountInput.value, 10) || 4, 2, 12);
+
+  // Build names array from textarea, fill/truncate as needed
+  let nameLines = playerNamesInput.value.split('\n')
+    .map(s => s.trim()).filter(Boolean);
+  namesByIndex = {};
+  for (let i = 1; i <= playersCount; i++) {
+    namesByIndex[i] = nameLines[i-1] || `Player ${i}`;
+  }
+
+  // Save player count and names to localStorage
+  savePlayerPrefs();
+
   // Sliders to be in sync
   perPokeIncrement = clamp(parseInt(sliderIncrement.value, 10), 1, 20);
   currentProb = clamp(parseInt(sliderInitial.value, 10), 0, 100);
@@ -212,6 +255,10 @@ function startGame() {
   for (let i = 1; i <= playersCount; i++) lullabyUsed[i] = false;
   gameActive = true;
 
+  // Poke counter
+  totalPokes = 0;
+  updatePokeBadge();
+
   // Lock sliders
   setSlidersEnabled(false);
 
@@ -223,6 +270,11 @@ function startGame() {
   clearLog();
   showGamePanel();
   gameOverMsg.style.display = 'none';
+
+  // Hide log, show poke badge
+  logArea.style.display = 'none';
+  btnToggleLog.textContent = "Show Log";
+  showPokeBadge();
 }
 
 function advanceTurn() {
@@ -235,13 +287,16 @@ function advanceTurn() {
 
 function pokeBear() {
   if (!gameActive) return;
+  totalPokes++;
+  updatePokeBadge();
   const pNum = turnOrder[currentTurnIndex];
+  const name = namesByIndex[pNum] || `Player ${pNum}`;
   // Wake check
   const wake = Math.random() * 100 < currentProb;
-  logAction(`Player ${pNum} poked: ${wake ? 'the bear woke up!' : 'survived.'} Chance was ${formatPercent(currentProb)}`);
+  logAction(`${name} poked: ${wake ? 'the bear woke up!' : 'survived.'} Chance was ${formatPercent(currentProb)}`);
   if (wake) {
     // Game over
-    logAction(`Player ${pNum} was eaten! Game Over.`);
+    logAction(`${name} was eaten! Game Over.`);
     showGameOver(pNum);
     updateProbDisplay();
     updateTurnListUI();
@@ -262,7 +317,8 @@ function pokeBear() {
 function endTurn() {
   if (!hasPokedThisTurn || !gameActive) return;
   const pNum = turnOrder[currentTurnIndex];
-  logAction(`Player ${pNum} ended turn.`);
+  const name = namesByIndex[pNum] || `Player ${pNum}`;
+  logAction(`${name} ended turn.`);
   advanceTurn();
 }
 
@@ -271,21 +327,23 @@ function useLullaby() {
   const pNum = turnOrder[currentTurnIndex];
   if (lullabyUsed[pNum]) return;
   lullabyUsed[pNum] = true;
+  const name = namesByIndex[pNum] || `Player ${pNum}`;
   // Reduce probability by 10 (clamp at 0)
   const before = currentProb;
   currentProb = clamp(currentProb - 10, 0, 100);
   updateProbDisplay();
-  logAction(`Player ${pNum} used Lullaby: chance now ${formatPercent(currentProb)}`);
+  logAction(`${name} used Lullaby: chance now ${formatPercent(currentProb)}`);
   updateTurnListUI();
   // Immediately end turn
-  logAction(`Player ${pNum} ended turn.`);
+  logAction(`${name} ended turn.`);
   advanceTurn();
 }
 
 function doResetGame() {
-  // Restore all to initial state
+  // Restore all to initial state, but keep playerCountInput and playerNamesInput as user set (do not reset!)
   setSlidersEnabled(true);
-  playerCountInput.value = "4";
+  //playerCountInput.value = "4"; // don't reset, keep
+  //playerNamesInput.value = ""; // don't reset, keep
   sliderInitial.value = "1";
   sliderInitialBottom.value = "1";
   sliderIncrement.value = "1";
@@ -300,6 +358,13 @@ function doResetGame() {
   currentTurnIndex = 0;
   currentPlayerLabel.textContent = '';
   updateProbDisplay(parseInt(sliderInitial.value, 10));
+  // Set poke badge to 0 and show
+  totalPokes = 0;
+  updatePokeBadge();
+  showPokeBadge();
+  // Hide log by default
+  logArea.style.display = 'none';
+  btnToggleLog.textContent = "Show Log";
 }
 
 // ==== Event Listeners ====
@@ -335,9 +400,11 @@ btnToggleLog.addEventListener('click', () => {
   if (logArea.style.display === 'none' || logArea.classList.contains('hidden')) {
     logArea.style.display = '';
     btnToggleLog.textContent = "Hide Log";
+    hidePokeBadge();
   } else {
     logArea.style.display = 'none';
     btnToggleLog.textContent = "Show Log";
+    showPokeBadge();
   }
 });
 
@@ -372,7 +439,7 @@ sliderIncrementBottom.addEventListener('input', () => {
   updateSliderDisplays();
 });
 
-// Player count input clamp
+// Player count input clamp and persist
 playerCountInput.addEventListener('input', () => {
   let val = parseInt(playerCountInput.value, 10);
   if (isNaN(val) || val < 2) {
@@ -380,10 +447,17 @@ playerCountInput.addEventListener('input', () => {
   } else if (val > 12) {
     playerCountInput.value = 12;
   }
+  savePlayerPrefs();
+});
+
+// Player names persist
+playerNamesInput.addEventListener('input', () => {
+  savePlayerPrefs();
 });
 
 // ==== Initialization ====
 function init() {
+  loadPlayerPrefs();
   updateSliderDisplays();
   setSlidersEnabled(true);
   showSetupPanel();
@@ -393,6 +467,9 @@ function init() {
   // Hide log and set toggle button to Show Log
   logArea.style.display = 'none';
   btnToggleLog.textContent = "Show Log";
+  showPokeBadge();
+  totalPokes = 0;
+  updatePokeBadge();
   // Hide slider-controls and set settings btn
   sliderControls.style.display = 'none';
   btnToggleSettings.textContent = "Settings";

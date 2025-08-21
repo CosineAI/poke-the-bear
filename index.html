@@ -31,6 +31,14 @@
         </label>
         <input id="sliderIncrement" type="range" min="1" max="20" step="1" value="1">
       </div>
+      <div class="setup-fields" style="flex-direction:column; align-items:stretch; gap:0.5em; width:100%; margin-top:1.2em;">
+        <label for="playerNamesInput">Player names (optional, one per line)</label>
+        <textarea id="playerNamesInput" rows="4" placeholder="e.g.
+Alice
+Bob
+Charlie
+Dana"></textarea>
+      </div>
       <div class="instructions">
         <p>
           Players take turns poking the bear. Each poke increases the chance the bear wakes!<br>
@@ -64,7 +72,10 @@
           <div>
             <div class="action-log-header">
               <h3>Action Log</h3>
-              <button id="btnToggleLog" class="secondary-btn">Show Log</button>
+              <div class="log-controls">
+                <span id="pokeCount" class="poke-count-badge" style="display:none;">Pokes: 0</span>
+                <button id="btnToggleLog" class="secondary-btn">Show Log</button>
+              </div>
             </div>
             <div id="log" class="action-log" style="display: none;"></div>
           </div>

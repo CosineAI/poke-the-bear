@@ -243,6 +243,20 @@ main {
   color: #886822;
   font-weight: 600;
 }
+.log-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+.poke-count-badge {
+  background: #e8f0ff;
+  color: #2b4a9b;
+  font-weight: 700;
+  border-radius: 0.7em;
+  padding: 0.2em 0.7em;
+  font-size: 0.95em;
+  box-shadow: 0 1px 4px #0001;
+}
 .action-log-header button {
   margin: 0 0 0 1em;
   padding: 0.35em 1.2em;
