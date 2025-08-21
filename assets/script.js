@@ -247,10 +247,6 @@ function updateProbDisplay(val) {
 }
 
 // Turn order list
-function getDefaultName(idx) {
-  return `Player ${idx}`;
-}
-
 function updateTurnListUI() {
   turnList.innerHTML = '';
   for (let i = 0; i < turnOrder.length; i++) {
@@ -280,7 +276,6 @@ function updateCurrentPlayerUI() {
   }
   const pNum = turnOrder[currentTurnIndex];
   currentPlayerLabel.textContent = `Turn: ${namesByIndex[pNum] || getDefaultName(pNum)}`;
-}`;
 }
 
 // Action buttons
