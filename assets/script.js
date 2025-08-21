@@ -247,12 +247,16 @@ function updateProbDisplay(val) {
 }
 
 // Turn order list
+function getDefaultName(idx) {
+  return `Player ${idx}`;
+}
+
 function updateTurnListUI() {
   turnList.innerHTML = '';
   for (let i = 0; i < turnOrder.length; i++) {
     const pNum = turnOrder[i];
     const li = document.createElement('li');
-    li.textContent = namesByIndex[pNum] || `Player ${pNum}`;
+    li.textContent = namesByIndex[pNum] || getDefaultName(pNum);
     if (i === currentTurnIndex && gameActive) {
       li.classList.add('current');
     }
@@ -276,6 +280,7 @@ function updateCurrentPlayerUI() {
   }
   const pNum = turnOrder[currentTurnIndex];
   currentPlayerLabel.textContent = `Turn: ${namesByIndex[pNum] || getDefaultName(pNum)}`;
+}`;
 }
 
 // Action buttons
