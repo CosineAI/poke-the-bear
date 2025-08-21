@@ -251,8 +251,8 @@ function updateTurnListUI() {
   turnList.innerHTML = '';
   for (let i = 0; i < turnOrder.length; i++) {
     const pNum = turnOrder[i];
-    li = document.createElement('li');
-    li.textContent = namesByIndex[pNum] || getDefaultName(pNum);
+    const li = document.createElement('li');
+    li.textContent = namesByIndex[pNum] || `Player ${pNum}`;
     if (i === currentTurnIndex && gameActive) {
       li.classList.add('current');
     }
@@ -265,6 +265,7 @@ function updateTurnListUI() {
     }
     turnList.appendChild(li);
   }
+}
 }
 
 // Current player
