@@ -430,6 +430,12 @@ footer {
   }
 }
 
+@media (min-width: 901px) {
+  .main-game-flex {
+    align-items: flex-start;
+  }
+}
+
 @media (max-width: 480px) {
   .game-title { font-size: 1.6rem; }
   .current-player { font-size: 1.05em; }
