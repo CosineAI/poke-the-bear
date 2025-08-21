@@ -17,6 +17,7 @@ const btnToggleLog = document.getElementById('btnToggleLog');
 const btnToggleSettings = document.getElementById('btnToggleSettings');
 const sliderControls = document.querySelector('.slider-controls');
 const pokeCountBadge = document.getElementById('pokeCount');
+const restlessMsg = document.getElementById('restlessMsg');
 
 // Sliders (both setup and bottom controls)
 const sliderInitial = document.getElementById('sliderInitial');
@@ -265,6 +266,7 @@ function updateTurnListUI() {
     }
     turnList.appendChild(li);
   }
+}
 // Current player
 function updateCurrentPlayerUI() {
   if (!gameActive) {
@@ -369,10 +371,14 @@ function startGame() {
   showGamePanel();
   gameOverMsg.style.display = 'none';
 
-  // Hide log, show poke badge
+  // Hide log, show poke badge, hide restless msg
   logArea.style.display = 'none';
   btnToggleLog.textContent = "Show Log";
   showPokeBadge();
+  if (restlessMsg) {
+    restlessMsg.style.display = 'none';
+    if (restlessTimeoutId) clearTimeout(restlessTimeoutId);
+  }
 }
 
 function advanceTurn() {
@@ -381,6 +387,17 @@ function advanceTurn() {
   updateTurnListUI();
   updateCurrentPlayerUI();
   setActionsEnabled(true);
+}
+
+let restlessTimeoutId = null;
+function showRestlessMessage(text) {
+  if (!restlessMsg) return;
+  restlessMsg.textContent = text;
+  restlessMsg.style.display = '';
+  if (restlessTimeoutId) clearTimeout(restlessTimeoutId);
+  restlessTimeoutId = setTimeout(() => {
+    restlessMsg.style.display = 'none';
+  }, 2500);
 }
 
 function pokeBear() {
@@ -407,9 +424,12 @@ function pokeBear() {
   currentProb = clamp(currentProb + perPokeIncrement, 0, 100);
   updateProbDisplay();
   logAction(`Chance now ${formatPercent(currentProb)}`);
-  // Add restless bear sentence
+  // Show restless bear sentence only if log is hidden, as a message not a log entry
   const sentence = restlessBear[Math.floor(Math.random() * restlessBear.length)];
-  logAction(sentence);
+  const isLogHidden = (logArea.style.display === 'none') || logArea.classList.contains('hidden');
+  if (isLogHidden) {
+    showRestlessMessage(sentence);
+  }
   updateTurnListUI();
   updateCurrentPlayerUI();
   setActionsEnabled(true);
@@ -464,6 +484,11 @@ function doResetGame() {
   // Hide log by default
   logArea.style.display = 'none';
   btnToggleLog.textContent = "Show Log";
+  // Hide restless message
+  if (restlessMsg) {
+    restlessMsg.style.display = 'none';
+    if (restlessTimeoutId) clearTimeout(restlessTimeoutId);
+  }
 }
 
 // ==== Event Listeners ====
@@ -500,6 +525,11 @@ btnToggleLog.addEventListener('click', () => {
     logArea.style.display = '';
     btnToggleLog.textContent = "Hide Log";
     hidePokeBadge();
+    // Hide restless bear message if showing
+    if (restlessMsg) {
+      restlessMsg.style.display = 'none';
+      if (restlessTimeoutId) clearTimeout(restlessTimeoutId);
+    }
   } else {
     logArea.style.display = 'none';
     btnToggleLog.textContent = "Show Log";
@@ -588,6 +618,11 @@ function init() {
   // Hide slider-controls and set settings btn
   sliderControls.style.display = 'none';
   btnToggleSettings.textContent = "Settings";
+  // Hide restless bear message if present
+  if (restlessMsg) {
+    restlessMsg.style.display = 'none';
+    if (restlessTimeoutId) clearTimeout(restlessTimeoutId);
+  }
   // Remove any lingering event handlers from previous dynamic new game button
   if (document.getElementById('btnGameOverNew')) {
     document.getElementById('btnGameOverNew').onclick = null;

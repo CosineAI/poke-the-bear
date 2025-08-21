@@ -289,6 +289,20 @@ main {
   gap: 0.6rem 1rem;
   width: 100%;
 }
+
+/* Restless bear transient message */
+.restless-msg {
+  margin: 0.5em 0 0.5em 0;
+  background: #fff7e0;
+  color: #6b4c1b;
+  border: 1px solid #e8d28a;
+  border-radius: 0.6em;
+  padding: 0.5em 0.75em;
+  font-size: 0.98em;
+  box-shadow: 0 1px 6px #0000000a;
+  text-align: center;
+  transition: opacity 0.25s;
+}
 .names-list .name-field {
   display: flex;
   flex-direction: column;
