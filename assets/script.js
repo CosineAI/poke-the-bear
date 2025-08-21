@@ -20,11 +20,6 @@ const pokeCountBadge = document.getElementById('pokeCount');
 const restlessMsg = document.getElementById('restlessMsg');
 
 // Sliders (both setup and bottom controls)
-const sliderInitial = document.getElementById('sliderInitial');
-const sliderIncrement = document.getElementById('sliderIncrement');
-const labelInitial = document.getElementById('labelInitial');
-const labelIncrement = document.getElementById('labelIncrement');
-
 const sliderInitialBottom = document.getElementById('sliderInitialBottom');
 const sliderIncrementBottom = document.getElementById('sliderIncrementBottom');
 const labelInitialBottom = document.getElementById('labelInitialBottom');
@@ -196,29 +191,12 @@ function scrollLogToBottom() {
 
 // ==== UI Update Functions ====
 function updateSliderDisplays() {
-  labelInitial.textContent = formatPercent(sliderInitial.value);
-  labelIncrement.textContent = `+${Math.round(sliderIncrement.value)}%`;
-
   labelInitialBottom.textContent = formatPercent(sliderInitialBottom.value);
   labelIncrementBottom.textContent = `+${Math.round(sliderIncrementBottom.value)}%`;
 }
 
-function syncSliders() {
-  // Keep setup and bottom sliders in sync
-  sliderInitial.value = sliderInitialBottom.value;
-  sliderIncrement.value = sliderIncrementBottom.value;
-  updateSliderDisplays();
-}
-function syncSlidersReverse() {
-  sliderInitialBottom.value = sliderInitial.value;
-  sliderIncrementBottom.value = sliderIncrement.value;
-  updateSliderDisplays();
-}
-
 // Lock/unlock sliders
 function setSlidersEnabled(enabled) {
-  sliderInitial.disabled = !enabled;
-  sliderIncrement.disabled = !enabled;
   sliderInitialBottom.disabled = !enabled;
   sliderIncrementBottom.disabled = !enabled;
 }
@@ -241,9 +219,7 @@ function updateProbDisplay(val) {
   // Always show risk label for the currentProb (or optional override value)
   let probVal = typeof val === 'number' ? val : currentProb;
   probDisplay.textContent = riskLabel(probVal);
-  labelInitial.textContent = formatPercent(sliderInitial.value);
   labelInitialBottom.textContent = formatPercent(sliderInitialBottom.value);
-  labelIncrement.textContent = `+${sliderIncrement.value}%`;
   labelIncrementBottom.textContent = `+${sliderIncrementBottom.value}%`;
 }
 
@@ -339,11 +315,9 @@ function startGame() {
   savePlayerPrefs();
 
   // Sliders to be in sync
-  perPokeIncrement = clamp(parseInt(sliderIncrement.value, 10), 1, 20);
-  currentProb = clamp(parseInt(sliderInitial.value, 10), 0, 100);
-  sliderInitial.value = currentProb;
+  perPokeIncrement = clamp(parseInt(sliderIncrementBottom.value, 10), 1, 20);
+  currentProb = clamp(parseInt(sliderInitialBottom.value, 10), 0, 100);
   sliderInitialBottom.value = currentProb;
-  sliderIncrement.value = perPokeIncrement;
   sliderIncrementBottom.value = perPokeIncrement;
 
   // Initialize turn order and state
@@ -389,15 +363,10 @@ function advanceTurn() {
   setActionsEnabled(true);
 }
 
-let restlessTimeoutId = null;
 function showRestlessMessage(text) {
   if (!restlessMsg) return;
   restlessMsg.textContent = text;
   restlessMsg.style.display = '';
-  if (restlessTimeoutId) clearTimeout(restlessTimeoutId);
-  restlessTimeoutId = setTimeout(() => {
-    restlessMsg.style.display = 'none';
-  }, 2500);
 }
 
 function pokeBear() {
@@ -463,9 +432,7 @@ function useLullaby() {
 function doResetGame() {
   // Restore all to initial state, but keep playerCountInput and names as user set (do not reset!)
   setSlidersEnabled(true);
-  sliderInitial.value = "1";
   sliderInitialBottom.value = "1";
-  sliderIncrement.value = "1";
   sliderIncrementBottom.value = "1";
   updateSliderDisplays();
   clearLog();
@@ -521,14 +488,13 @@ btnNewGame.addEventListener('click', doResetGame);
 
 // Action Log Toggle
 btnToggleLog.addEventListener('click', () => {
-  if (logArea.style.display === 'none' || logArea.classList.contains('hidden')) {
+  if (logArea.style.display === 'none') {
     logArea.style.display = '';
     btnToggleLog.textContent = "Hide Log";
     hidePokeBadge();
     // Hide restless bear message if showing
     if (restlessMsg) {
       restlessMsg.style.display = 'none';
-      if (restlessTimeoutId) clearTimeout(restlessTimeoutId);
     }
   } else {
     logArea.style.display = 'none';
@@ -548,23 +514,12 @@ btnToggleSettings.addEventListener('click', () => {
   }
 });
 
-// Sliders sync
-sliderInitial.addEventListener('input', () => {
-  syncSlidersReverse();
-  updateSliderDisplays();
-  updateProbDisplay(parseInt(sliderInitial.value, 10));
-});
-sliderIncrement.addEventListener('input', () => {
-  syncSlidersReverse();
-  updateSliderDisplays();
-});
+// Sliders sync (bottom controls only)
 sliderInitialBottom.addEventListener('input', () => {
-  syncSliders();
   updateSliderDisplays();
   updateProbDisplay(parseInt(sliderInitialBottom.value, 10));
 });
 sliderIncrementBottom.addEventListener('input', () => {
-  syncSliders();
   updateSliderDisplays();
 });
 
@@ -620,15 +575,15 @@ function init() {
   btnToggleSettings.textContent = "Settings";
   // Hide restless bear message if present
   if (restlessMsg) {
+    restlessMsg.textContent = '';
     restlessMsg.style.display = 'none';
-    if (restlessTimeoutId) clearTimeout(restlessTimeoutId);
   }
   // Remove any lingering event handlers from previous dynamic new game button
   if (document.getElementById('btnGameOverNew')) {
     document.getElementById('btnGameOverNew').onclick = null;
   }
   // Set risk label display for initial slider value
-  updateProbDisplay(parseInt(sliderInitial.value, 10));
+  updateProbDisplay(parseInt(sliderInitialBottom.value, 10));
 }
 
 window.addEventListener('DOMContentLoaded', init);
