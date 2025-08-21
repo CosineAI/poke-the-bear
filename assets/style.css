@@ -230,6 +230,25 @@ main {
   border: 2px solid #d38181;
 }
 
+.action-log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1em;
+  margin-bottom: 0.2em;
+}
+.action-log-header h3 {
+  margin: 0;
+  font-size: 1.08em;
+  color: #886822;
+  font-weight: 600;
+}
+.action-log-header button {
+  margin: 0 0 0 1em;
+  padding: 0.35em 1.2em;
+  font-size: 0.97em;
+}
+
 .action-log {
   background: #faf6ef;
   border-radius: 0.6em;
@@ -242,6 +261,11 @@ main {
   margin-top: 0.5em;
   margin-bottom: 0.5em;
   line-height: 1.5;
+}
+
+/* Utility class for hiding */
+.hidden {
+  display: none !important;
 }
 
 .action-log-entry {

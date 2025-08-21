@@ -62,8 +62,11 @@
           </div>
           <div class="game-over-message" id="gameOverMsg" style="display:none;"></div>
           <div>
-            <h3>Action Log</h3>
-            <div id="log" class="action-log"></div>
+            <div class="action-log-header">
+              <h3>Action Log</h3>
+              <button id="btnToggleLog" class="secondary-btn">Show Log</button>
+            </div>
+            <div id="log" class="action-log" style="display: none;"></div>
           </div>
         </section>
       </div>
@@ -72,10 +75,11 @@
   <!-- Bottom Controls: Probability & Sliders -->
   <div class="bottom-controls">
     <div class="probability">
-      <span>Wake Chance:</span>
-      <span id="probDisplay" class="prob-value">1%</span>
+      <span>Risk Level:</span>
+      <span id="probDisplay" class="prob-value">Low risk</span>
     </div>
-    <div class="slider-controls">
+    <button id="btnToggleSettings" class="secondary-btn">Settings</button>
+    <div class="slider-controls" style="display: none;">
       <label for="sliderInitial" class="slider-label">
         Initial Probability:
         <span id="labelInitialBottom" class="slider-value">1%</span>

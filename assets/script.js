@@ -14,6 +14,9 @@ const turnList = document.getElementById('turnList');
 const logArea = document.getElementById('log');
 const gameOverMsg = document.getElementById('gameOverMsg');
 const currentPlayerLabel = document.getElementById('currentPlayer');
+const btnToggleLog = document.getElementById('btnToggleLog');
+const btnToggleSettings = document.getElementById('btnToggleSettings');
+const sliderControls = document.querySelector('.slider-controls');
 
 // Sliders (both setup and bottom controls)
 const sliderInitial = document.getElementById('sliderInitial');
@@ -52,6 +55,16 @@ function clamp(num, min, max) {
 
 function formatPercent(val) {
   return `${Math.round(val)}%`;
+}
+
+// Risk label function
+function riskLabel(p) {
+  p = clamp(p, 0, 100);
+  if (p <= 8) return "Low risk";
+  if (p <= 16) return "Gettin' dicey";
+  if (p <= 24) return "Are you sure you want to keep going?";
+  if (p <= 30) return "Your middle name is Danger";
+  return "Incredible bravery (or stupidity)?";
 }
 
 function scrollLogToBottom() {
@@ -103,8 +116,10 @@ function showGamePanel() {
 }
 
 // Probability display
-function updateProbDisplay() {
-  probDisplay.textContent = formatPercent(currentProb);
+function updateProbDisplay(val) {
+  // Always show risk label for the currentProb (or optional override value)
+  let probVal = typeof val === 'number' ? val : currentProb;
+  probDisplay.textContent = riskLabel(probVal);
   labelInitial.textContent = formatPercent(sliderInitial.value);
   labelInitialBottom.textContent = formatPercent(sliderInitialBottom.value);
   labelIncrement.textContent = `+${sliderIncrement.value}%`;
@@ -284,7 +299,7 @@ function doResetGame() {
   lullabyUsed = {};
   currentTurnIndex = 0;
   currentPlayerLabel.textContent = '';
-  probDisplay.textContent = formatPercent(sliderInitial.value);
+  updateProbDisplay(parseInt(sliderInitial.value, 10));
 }
 
 // ==== Event Listeners ====
@@ -297,7 +312,6 @@ startBtn.addEventListener('click', () => {
 // Poke
 btnPoke.addEventListener('click', () => {
   if (!gameActive) return;
-  // Don't allow to poke if game is over
   pokeBear();
 });
 
@@ -316,11 +330,33 @@ btnLullaby.addEventListener('click', () => {
 // New Game (in panel)
 btnNewGame.addEventListener('click', doResetGame);
 
+// Action Log Toggle
+btnToggleLog.addEventListener('click', () => {
+  if (logArea.style.display === 'none' || logArea.classList.contains('hidden')) {
+    logArea.style.display = '';
+    btnToggleLog.textContent = "Hide Log";
+  } else {
+    logArea.style.display = 'none';
+    btnToggleLog.textContent = "Show Log";
+  }
+});
+
+// Settings (bottom slider-controls) Toggle
+btnToggleSettings.addEventListener('click', () => {
+  if (sliderControls.style.display === 'none' || sliderControls.classList.contains('hidden')) {
+    sliderControls.style.display = '';
+    btnToggleSettings.textContent = "Hide Settings";
+  } else {
+    sliderControls.style.display = 'none';
+    btnToggleSettings.textContent = "Settings";
+  }
+});
+
 // Sliders sync
 sliderInitial.addEventListener('input', () => {
   syncSlidersReverse();
   updateSliderDisplays();
-  probDisplay.textContent = formatPercent(sliderInitial.value);
+  updateProbDisplay(parseInt(sliderInitial.value, 10));
 });
 sliderIncrement.addEventListener('input', () => {
   syncSlidersReverse();
@@ -329,7 +365,7 @@ sliderIncrement.addEventListener('input', () => {
 sliderInitialBottom.addEventListener('input', () => {
   syncSliders();
   updateSliderDisplays();
-  probDisplay.textContent = formatPercent(sliderInitialBottom.value);
+  updateProbDisplay(parseInt(sliderInitialBottom.value, 10));
 });
 sliderIncrementBottom.addEventListener('input', () => {
   syncSliders();
@@ -346,21 +382,26 @@ playerCountInput.addEventListener('input', () => {
   }
 });
 
-// When game over "New Game" button is shown inside the message, it is dynamically created and attached
-
 // ==== Initialization ====
 function init() {
   updateSliderDisplays();
   setSlidersEnabled(true);
   showSetupPanel();
   clearLog();
-  probDisplay.textContent = formatPercent(sliderInitial.value);
   // Hide game over msg
   gameOverMsg.style.display = 'none';
+  // Hide log and set toggle button to Show Log
+  logArea.style.display = 'none';
+  btnToggleLog.textContent = "Show Log";
+  // Hide slider-controls and set settings btn
+  sliderControls.style.display = 'none';
+  btnToggleSettings.textContent = "Settings";
   // Remove any lingering event handlers from previous dynamic new game button
   if (document.getElementById('btnGameOverNew')) {
     document.getElementById('btnGameOverNew').onclick = null;
   }
+  // Set risk label display for initial slider value
+  updateProbDisplay(parseInt(sliderInitial.value, 10));
 }
 
 window.addEventListener('DOMContentLoaded', init);
