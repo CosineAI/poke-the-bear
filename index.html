@@ -1,17 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Static Site</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poke the Bear</title>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+  <header>
+    <h1 class="game-title">🐻 Poke the Bear</h1>
+  </header>
   <main>
-    <h1>Welcome to Your Static Site</h1>
+    <!-- Setup Panel -->
+    <section id="setupPanel" class="card panel">
+      <h2>Game Setup</h2>
+      <div class="setup-fields">
+        <label for="playerCountInput">Number of Players:</label>
+        <input id="playerCountInput" type="number" min="2" max="12" value="4">
+      </div>
+      
+      <div class="setup-fields" style="flex-direction:column; align-items:stretch; gap:0.5em; width:100%; margin-top:1.2em;">
+        <label>Player names (optional)</label>
+        <div id="playerNamesContainer" class="names-list"></div>
+      </div>
+      <div class="instructions">
+        <p>
+          Players take turns poking the bear. Each poke increases the chance the bear wakes!<br>
+          You must poke at least once per turn, or you can use your single-use “Lullaby” to lower the risk.<br>
+          If you wake the bear, you lose! (Take a drink!)
+        </p>
+      </div>
+      <button id="startBtn" class="primary-btn">Start Game</button>
+    </section>
+
+    <!-- Game Panel -->
+    <section id="gamePanel" class="card panel" style="display: none;">
+      <div class="game-header">
+        <div id="currentPlayer" class="current-player"></div>
+        <button id="btnNewGame" class="secondary-btn">New Game</button>
+      </div>
+      <div class="main-game-flex">
+        <!-- Left: Turn Order -->
+        <aside class="turn-order-area">
+          <h3>Turn Order</h3>
+          <ul id="turnList" class="turn-list"></ul>
+        </aside>
+        <!-- Center: Actions & Log -->
+        <section class="game-actions-area">
+          <div class="actions">
+            <button id="btnPoke" class="action-btn">Poke the Bear</button>
+            <button id="btnEndTurn" class="action-btn" disabled>End Turn</button>
+            <button id="btnLullaby" class="action-btn">Sing a Lullaby</button>
+          </div>
+          <div class="game-over-message" id="gameOverMsg" style="display:none;"></div>
+          <div>
+            <div class="action-log-header">
+              <h3>Action Log</h3>
+              <div class="log-controls">
+                <span id="pokeCount" class="poke-count-badge" style="display:none;">Pokes: 0</span>
+                <button id="btnToggleLog" class="secondary-btn">Show Log</button>
+              </div>
+            </div>
+            <div id="log" class="action-log" style="display: none;"></div>
+          </div>
+          <div id="restlessMsg" class="restless-msg" role="status" aria-live="polite" style="display:none;"></div>
+        </section>
+      </div>
+    </section>
   </main>
+  <!-- Bottom Controls: Probability & Sliders -->
+  <div class="bottom-controls">
+    <div class="probability">
+      <span>Risk Level:</span>
+      <span id="probDisplay" class="prob-value">Low risk</span>
+    </div>
+    <button id="btnToggleSettings" class="secondary-btn">Settings</button>
+    <div class="slider-controls" style="display: none;">
+      <label for="sliderInitial" class="slider-label">
+        Initial Probability:
+        <span id="labelInitialBottom" class="slider-value">1%</span>
+      </label>
+      <input id="sliderInitialBottom" type="range" min="0" max="50" step="1" value="1">
+
+      <label for="sliderIncrement" class="slider-label">
+        Poke Increment:
+        <span id="labelIncrementBottom" class="slider-value">+1%</span>
+      </label>
+      <input id="sliderIncrementBottom" type="range" min="1" max="20" step="1" value="1">
+    </div>
+  </div>
   <footer>
-    <p>&copy; 2025 Your Name</p>
+    <p>Made with ❤️ for party gamers.</p>
   </footer>
   <script src="assets/script.js"></script>
 </body>
