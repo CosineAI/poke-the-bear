@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/mattn/go-isatty"
 )
 
 type spark struct {
@@ -232,6 +235,56 @@ func (m model) View() string {
 	return b.String()
 }
 
+// fallbackNonInteractive renders frames to stdout without using Bubble Tea,
+// which avoids opening /dev/tty in non-TTY environments (CI, logs, etc.).
+func fallbackNonInteractive() {
+	// Size from env or defaults
+	w := getenvInt("COLUMNS", 80)
+	h := getenvInt("LINES", 24)
+	if w < 20 {
+		w = 80
+	}
+	if h < 14 {
+		h = 24
+	}
+
+	m := initialModel()
+	m.w = w
+	m.h = h - 6
+	if m.h < 6 {
+		m.h = 6
+	}
+	m.initGrid()
+
+	frames := 150
+	frameDelay := time.Second / 30
+
+	// Hide cursor for nicer output
+	fmt.Print("\x1b[?25l")
+	defer fmt.Print("\x1b[?25h")
+
+	for i := 0; i < frames; i++ {
+		m.step()
+		// Clear screen and move cursor home
+		fmt.Print("\x1b[2J\x1b[H")
+		fmt.Print(m.View())
+		time.Sleep(frameDelay)
+	}
+}
+
+// helpers
+func getenvInt(name string, def int) int {
+	v := os.Getenv(name)
+	if v == "" {
+		return def
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		return def
+	}
+	return n
+}
+
 // intensityColor maps heat intensity to 256-color palette codes
 func intensityColor(v float64) int {
 	// clamp and scale
@@ -379,6 +432,14 @@ func pickPalette(a, b int, t float64) int {
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
+
+	// Detect TTY; if not present, run a non-interactive fallback that
+	// streams frames to stdout without opening /dev/tty.
+	if !isatty.IsTerminal(os.Stdout.Fd()) && !isatty.IsCygwinTerminal(os.Stdout.Fd()) {
+		fallbackNonInteractive()
+		return
+	}
+
 	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
 	if err := p.Start(); err != nil {
 		fmt.Println("error:", err)
