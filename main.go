@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -256,19 +258,40 @@ func fallbackNonInteractive() {
 	}
 	m.initGrid()
 
-	frames := 150
 	frameDelay := time.Second / 30
 
 	// Hide cursor for nicer output
 	fmt.Print("\x1b[?25l")
 	defer fmt.Print("\x1b[?25h")
 
-	for i := 0; i < frames; i++ {
-		m.step()
-		// Clear screen and move cursor home
-		fmt.Print("\x1b[2J\x1b[H")
-		fmt.Print(m.View())
-		time.Sleep(frameDelay)
+	// If FIREPLACE_FRAMES is set, render that many frames (useful for CI/tests)
+	if frames := getenvInt("FIREPLACE_FRAMES", -1); frames > 0 {
+		for i := 0; i < frames; i++ {
+			m.step()
+			// Clear screen and move cursor home
+			fmt.Print("\x1b[2J\x1b[H")
+			fmt.Print(m.View())
+			time.Sleep(frameDelay)
+		}
+		return
+	}
+
+	// Otherwise keep running until interrupted
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc, syscall.SIGINT, syscall.SIGTERM)
+
+	ticker := time.NewTicker(frameDelay)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			m.step()
+			fmt.Print("\x1b[2J\x1b[H")
+			fmt.Print(m.View())
+		case <-sigc:
+			return
+		}
 	}
 }
 
