@@ -241,13 +241,14 @@ func (m model) View() string {
 // which avoids opening /dev/tty in non-TTY environments (CI, logs, etc.).
 func fallbackNonInteractive() {
 	// Size from env or defaults
-	w := getenvInt("COLUMNS", 80)
-	h := getenvInt("LINES", 24)
+	// Prefer explicit FIREPLACE_WIDTH/HEIGHT, then COLUMNS/LINES, otherwise bigger defaults.
+	w := getenvInt("FIREPLACE_WIDTH", getenvInt("COLUMNS", 120))
+	h := getenvInt("FIREPLACE_HEIGHT", getenvInt("LINES", 36))
 	if w < 20 {
-		w = 80
+		w = 120
 	}
 	if h < 14 {
-		h = 24
+		h = 36
 	}
 
 	m := initialModel()
