@@ -39,3 +39,9 @@ Settings lock once the game starts.
 ## Notes
 
 - Player count and names are saved in `localStorage` for convenience.
+
+## Joke
+
+Why don’t bears use computers?
+
+Because they’re afraid of the mouse.
